@@ -18,30 +18,31 @@ export class PomodoroTimer extends React.Component {
     this.handleInputchange = this.handleInputchange.bind(this);
 
     this.state = {
-      interval: 0.15,
+      interval: 0.1,
       pause: 5,
       timerSet: false,
+
       time: 0,
       playSound: false
     };
     this.timerValues = [45, 35, 25, 15, "custom"];
     this.pauseValues = [5, 10, 15, 30, "custom"];
-
-    const alert = () => {
-      this.soundRef = React.createRef();
-      if (this.state.playSound) {
-        return <audio ref={this.soundRef} src="sounds/oldring.mp3" autoPlay />;
-      }
-    };
   }
 
   stopTimer() {
     clearInterval(this.timer);
+    this.sound.pause();
     this.setState({
       time: 0,
-      timerSet: false,
-      playSound: false
+      timerSet: false
     });
+
+    if (this.state.playSound) {
+      this.setState({
+        playSound: false
+      });
+      // this.startTimer()
+    }
   }
 
   startTimer() {
@@ -63,8 +64,9 @@ export class PomodoroTimer extends React.Component {
         this.setState({
           playSound: true
         });
+        this.sound.play();
       }
-    }, 1);
+    }, 1000);
   }
 
   handleInputchange(evt) {
@@ -75,15 +77,17 @@ export class PomodoroTimer extends React.Component {
     this.setState({
       [name]: value
     });
-    console.log(name, value);
   }
 
   render() {
     let minutes = Math.floor(
       (this.state.time % (1000 * 60 * 60)) / (1000 * 60)
     );
+    minutes = minutes < 0 ? 0 : minutes;
     minutes = minutes < 10 ? "0".concat(minutes) : minutes;
+
     let seconds = Math.floor((this.state.time % (1000 * 60)) / 1000);
+    seconds = seconds < 0 ? 0 : seconds;
     seconds = seconds < 10 ? "0".concat(seconds) : seconds;
 
     let intervalOptions = this.timerValues.map(o => {
@@ -93,6 +97,7 @@ export class PomodoroTimer extends React.Component {
         </option>
       );
     });
+
     let pauseOptions = this.pauseValues.map(o => {
       return (
         <option key={o} value={o}>
@@ -101,10 +106,17 @@ export class PomodoroTimer extends React.Component {
       );
     });
     let btnText = this.state.timerSet ? "stop" : "start";
+
     return (
       <Navbar collapseOnSelect expand="lg" bg="light">
+        <audio
+          ref={sound => {
+            this.sound = sound;
+          }}
+          src="sounds/oldring.mp3"
+          type="audio/mpeg"
+        />
         <Navbar.Brand>
-          {" "}
           <img
             alt=""
             src="tomato.png"
@@ -120,22 +132,24 @@ export class PomodoroTimer extends React.Component {
               <Col>
                 <Form.Label>pomodori</Form.Label>
                 <Form.Control
-                  as="select"
+                  as="input"
+                  list="interval"
                   name="interval"
+                  placeholder={this.state.interval}
                   onChange={this.handleInputchange}
-                >
-                  {intervalOptions}
-                </Form.Control>
+                ></Form.Control>
+                <datalist id="interval">{intervalOptions}</datalist>
               </Col>
               <Col>
                 <Form.Label>break</Form.Label>
                 <Form.Control
-                  as="select"
+                  as="input"
+                  list="pause"
                   name="pause"
+                  placeholder={this.state.pause}
                   onChange={this.handleInputchange}
-                >
-                  {pauseOptions}
-                </Form.Control>
+                ></Form.Control>
+                <datalist id="pause">{pauseOptions}</datalist>
               </Col>
             </Form.Row>
           </Form>
